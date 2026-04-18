@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LaundryOS — Order Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060b14;
+  --bg2: #0a1120;
+  --bg3: #0f1829;
+  --bg4: #162035;
+  --card: rgba(15, 28, 50, 0.9);
+  --border: rgba(59, 130, 246, 0.12);
+  --border2: rgba(59, 130, 246, 0.22);
+  --blue: #3b82f6;
+  --blue2: #2563eb;
+  --blue3: #1d4ed8;
+  --blue-light: #60a5fa;
+  --blue-glow: rgba(59, 130, 246, 0.2);
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-muted: #475569;
+  --accent: #38bdf8;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --gray: #64748b;
+  --sidebar-w: 240px;
+  --header-h: 64px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-blue: 0 4px 24px rgba(59,130,246,0.15);
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; }
+#root { height: 100%; }
+button { font-family: 'Inter', sans-serif; }
+input, select, textarea { font-family: 'Inter', sans-serif; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.25); border-radius: 3px; }
+
+/* Layout */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w); background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; position: relative; z-index: 40;
+  overflow: hidden;
+}
+.sidebar-logo {
+  padding: 0 20px; height: var(--header-h);
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue2), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; box-shadow: 0 0 16px var(--blue-glow);
+}
+.logo-text { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.logo-text span { color: var(--blue-light); }
+.sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+.nav-section-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted); padding: 12px 10px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  color: var(--text-dim); font-size: 14px; font-weight: 500;
+  transition: all 0.15s; border: 1px solid transparent;
+  background: transparent;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); border-color: var(--border); }
+.nav-item.active {
+  background: rgba(59,130,246,0.12); color: var(--blue-light);
+  border-color: rgba(59,130,246,0.25);
+  box-shadow: 0 0 12px rgba(59,130,246,0.08);
+}
+.nav-item.active .nav-icon { color: var(--blue); }
+.nav-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.sidebar-bottom {
+  padding: 12px; border-top: 1px solid var(--border);
+}
+.user-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  background: var(--bg3); border: 1px solid var(--border);
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue3), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.user-role { font-size: 11px; color: var(--text-muted); }
+
+/* Main area */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.header {
+  height: var(--header-h); background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px;
+  gap: 16px; flex-shrink: 0; position: relative; z-index: 30;
+}
+.header-title { font-size: 20px; font-weight: 700; color: var(--text); flex: 1; }
+.header-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+.content { flex: 1; overflow-y: auto; padding: 28px; }
+
+/* Cards */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); backdrop-filter: blur(8px);
+}
+.card-hover { transition: all 0.2s; }
+.card-hover:hover { border-color: var(--border2); box-shadow: var(--shadow-blue); transform: translateY(-1px); }
+
+/* Stat cards */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative; overflow: hidden; transition: all 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); box-shadow: var(--shadow-blue); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 80px; height: 80px; border-radius: 50%;
+  opacity: 0.06; transform: translate(20px, -20px);
+}
+.stat-card.blue::before { background: var(--blue); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.yellow::before { background: var(--yellow); }
+.stat-card.red::before { background: var(--red); }
+.stat-label { font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.stat-value { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.stat-icon { font-size: 22px; margin-bottom: 2px; }
+.stat-trend { font-size: 12px; color: var(--text-muted); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; transition: all 0.15s;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue2), var(--blue));
+  color: #fff; border-color: rgba(59,130,246,0.4);
+  box-shadow: 0 0 16px rgba(59,130,246,0.2);
+}
+.btn-primary:hover { box-shadow: 0 0 24px rgba(59,130,246,0.4); transform: scale(1.02); }
+.btn-secondary {
+  background: var(--bg3); color: var(--text); border-color: var(--border2);
+}
+.btn-secondary:hover { background: var(--bg4); border-color: var(--blue); color: var(--blue-light); }
+.btn-danger {
+  background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.25);
+}
+.btn-danger:hover { background: rgba(239,68,68,0.2); box-shadow: 0 0 12px rgba(239,68,68,0.2); }
+.btn-ghost { background: transparent; color: var(--text-dim); border-color: var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--bg3); }
+.btn-sm { padding: 6px 11px; font-size: 12px; }
+.btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 7px; }
+
+/* Status badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.badge-received { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+.badge-processing { background: rgba(59,130,246,0.12); color: var(--blue-light); border: 1px solid rgba(59,130,246,0.25); }
+.badge-ready { background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.25); }
+.badge-delivered { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge-received .badge-dot { background: #94a3b8; }
+.badge-processing .badge-dot { background: var(--blue-light); box-shadow: 0 0 6px var(--blue); }
+.badge-ready .badge-dot { background: #facc15; box-shadow: 0 0 6px var(--yellow); }
+.badge-delivered .badge-dot { background: #4ade80; box-shadow: 0 0 6px var(--green); }
+
+/* Table */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--bg3); }
+th {
+  padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td { padding: 14px 16px; font-size: 13px; color: var(--text); border-bottom: 1px solid rgba(15,28,50,0.8); vertical-align: middle; }
+tbody tr { transition: background 0.12s; }
+tbody tr:hover { background: rgba(59,130,246,0.04); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.recent { background: rgba(59,130,246,0.04); }
+.order-id { font-family: monospace; font-size: 12px; color: var(--blue-light); font-weight: 600; }
+.customer-name { font-weight: 600; color: var(--text); }
+.phone { font-family: monospace; font-size: 12px; color: var(--text-dim); }
+.amount { font-weight: 700; color: var(--green); }
+
+/* Forms */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.form-input {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 14px; color: var(--text); outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.form-input::placeholder { color: var(--text-muted); }
+.form-input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+.form-error { font-size: 12px; color: #f87171; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* Garment row */
+.garment-row {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  transition: border-color 0.15s;
+}
+.garment-row:hover { border-color: var(--border2); }
+.garment-select { flex: 2; background: transparent; border: none; color: var(--text); font-size: 14px; outline: none; }
+.garment-select option { background: var(--bg3); color: var(--text); }
+.qty-input { width: 60px; background: var(--bg4); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 14px; color: var(--text); outline: none; text-align: center; }
+.qty-input:focus { border-color: var(--blue); }
+.garment-price { font-size: 13px; color: var(--green); font-weight: 600; min-width: 70px; text-align: right; }
+
+/* Total display */
+.total-bar {
+  background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(56,189,248,0.06));
+  border: 1px solid rgba(59,130,246,0.25); border-radius: var(--radius);
+  padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+}
+.total-label { font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.total-value { font-size: 24px; font-weight: 800; color: var(--blue-light); }
+
+/* Filters bar */
+.filters-bar {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 16px;
+}
+.filter-select {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 9px 14px;
+  font-size: 13px; color: var(--text); outline: none;
+  transition: border-color 0.15s;
+}
+.filter-select:focus { border-color: var(--blue); }
+.search-wrap { position: relative; flex: 1; min-width: 180px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--text-muted); }
+.search-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 9px 14px 9px 36px;
+  font-size: 13px; color: var(--text); outline: none; transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--blue); }
+
+/* Chart */
+.chart-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media (max-width: 900px) { .chart-wrap { grid-template-columns: 1fr; } }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.chart-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 100px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
+.bar:hover::after { content: attr(data-val); position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 10px; background: var(--bg4); color: var(--text); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.bar-label { font-size: 10px; color: var(--text-muted); text-align: center; }
+.pie-chart { display: flex; gap: 20px; align-items: center; }
+.pie-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.pie-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.pie-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pie-legend-label { color: var(--text-dim); flex: 1; }
+.pie-legend-val { color: var(--text); font-weight: 600; }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  font-size: 13px; color: var(--text); box-shadow: var(--shadow);
+  animation: toastIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  max-width: 340px; pointer-events: all;
+}
+.toast.success { border-color: rgba(34,197,94,0.3); }
+.toast.error { border-color: rgba(239,68,68,0.3); }
+.toast.info { border-color: rgba(59,130,246,0.3); }
+.toast-icon { font-size: 16px; flex-shrink: 0; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(20px) scale(0.95); } to { opacity: 1; transform: none; } }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(6,11,20,0.85);
+  backdrop-filter: blur(4px); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 28px; width: 90%; max-width: 440px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: modalIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.94) translateY(10px); } to { opacity: 1; transform: none; } }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.modal-body { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Login */
+.login-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  background-image: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(56,189,248,0.04) 0%, transparent 50%);
+}
+.login-card {
+  width: 380px; background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 36px; box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.login-header { text-align: center; margin-bottom: 32px; }
+.login-logo { width: 56px; height: 56px; background: linear-gradient(135deg, var(--blue2), var(--accent)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px; box-shadow: 0 0 30px rgba(59,130,246,0.3); }
+.login-title { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.login-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* Loading */
+.spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 60px; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-size: 16px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; }
+
+/* Garments summary */
+.garments-summary { display: flex; flex-wrap: wrap; gap: 4px; }
+.garment-tag {
+  background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+  color: var(--blue-light); font-size: 11px; font-weight: 500;
+  padding: 2px 8px; border-radius: 20px;
+}
+
+/* Status select in table */
+.status-select {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 600;
+  color: var(--text); outline: none; transition: border-color 0.15s;
+}
+.status-select:focus { border-color: var(--blue); }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* Highlight recent */
+.recent-badge { font-size: 10px; background: rgba(59,130,246,0.15); color: var(--blue-light); padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 6px; }
+
+/* Misc */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.font-bold { font-weight: 700; }
+.text-dim { color: var(--text-dim); }
+.text-muted { color: var(--text-muted); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.w-full { width: 100%; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+// ── CONSTANTS ──────────────────────────────────────────────
+const GARMENTS = [
+  { name: 'Shirt', price: 50, icon: '👔' },
+  { name: 'Pants', price: 80, icon: '👖' },
+  { name: 'Saree', price: 100, icon: '🥻' },
+  { name: 'Jacket', price: 150, icon: '🧥' },
+  { name: 'Kurta', price: 60, icon: '👘' },
+  { name: 'Suit', price: 200, icon: '🤵' },
+];
+const STATUSES = ['RECEIVED', 'PROCESSING', 'READY', 'DELIVERED'];
+const STATUS_META = {
+  RECEIVED: { cls: 'badge-received', label: 'Received', next: 'PROCESSING' },
+  PROCESSING: { cls: 'badge-processing', label: 'Processing', next: 'READY' },
+  READY: { cls: 'badge-ready', label: 'Ready', next: 'DELIVERED' },
+  DELIVERED: { cls: 'badge-delivered', label: 'Delivered', next: null },
+};
+
+// ── MOCK DB (localStorage) ──────────────────────────────────
+const DB_KEY = 'laundry_orders_v3';
+const USER_KEY = 'laundry_user';
+
+const genId = () => 'ORD-' + Math.random().toString(36).slice(2, 6).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
+const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+const fmtTime = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+function loadOrders() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); } catch { return []; }
+}
+function saveOrders(orders) {
+  localStorage.setItem(DB_KEY, JSON.stringify(orders));
+}
+
+// Seed demo data if empty
+function seedIfEmpty() {
+  const orders = loadOrders();
+  if (orders.length > 0) return;
+  const demos = [
+    { customerName: 'Raj Kumar', phone: '9876543210', garments: [{ name: 'Shirt', qty: 3 }, { name: 'Pants', qty: 2 }], status: 'DELIVERED' },
+    { customerName: 'Priya Sharma', phone: '8765432109', garments: [{ name: 'Saree', qty: 2 }], status: 'READY' },
+    { customerName: 'Amit Singh', phone: '7654321098', garments: [{ name: 'Suit', qty: 1 }, { name: 'Shirt', qty: 2 }], status: 'PROCESSING' },
+    { customerName: 'Meena Pillai', phone: '6543210987', garments: [{ name: 'Kurta', qty: 4 }], status: 'RECEIVED' },
+    { customerName: 'Suresh Nair', phone: '9988776655', garments: [{ name: 'Jacket', qty: 1 }, { name: 'Pants', qty: 3 }], status: 'PROCESSING' },
+  ];
+  const seeded = demos.map((d, i) => {
+    const gs = d.garments.map(g => {
+      const meta = GARMENTS.find(x => x.name === g.name);
+      return { name: g.name, quantity: g.qty, unitPrice: meta.price, subtotal: meta.price * g.qty };
+    });
+    const total = gs.reduce((s, g) => s + g.subtotal, 0);
+    const now = new Date();
+    now.setHours(now.getHours() - (i * 8 + 2));
+    return {
+      orderId: genId(), customerName: d.customerName, phone: d.phone,
+      garments: gs, totalAmount: total, status: d.status,
+      estimatedDelivery: addDays(now, 2).toISOString(),
+      createdAt: now.toISOString(), notes: '',
+    };
+  });
+  saveOrders(seeded);
+}
+seedIfEmpty();
+
+// ── TOAST ──────────────────────────────────────────────────
+const ToastCtx = React.createContext();
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type = 'info') => {
+    const id = Date.now();
+    setToasts(p => [...p, { id, msg, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3000);
+  }, []);
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  return (
+    <ToastCtx.Provider value={add}>
+      {children}
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast ${t.type}`}>
+            <span className="toast-icon">{icons[t.type]}</span>
+            <span>{t.msg}</span>
+          </div>
+        ))}
+      </div>
+    </ToastCtx.Provider>
+  );
+}
+const useToast = () => React.useContext(ToastCtx);
+
+// ── STATUS BADGE ───────────────────────────────────────────
+function StatusBadge({ status }) {
+  const m = STATUS_META[status] || STATUS_META.RECEIVED;
+  return (
+    <span className={`badge ${m.cls}`}>
+      <span className="badge-dot" />
+      {m.label}
+    </span>
+  );
+}
+
+// ── CONFIRM MODAL ──────────────────────────────────────────
+function ConfirmModal({ title, body, onConfirm, onCancel, danger }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">{title}</div>
+        <div className="modal-body">{body}</div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+          <button className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>Confirm</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PIE CHART (SVG) ────────────────────────────────────────
+function PieChart({ data }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return <div className="empty-state" style={{padding:20}}><div className="empty-icon">📊</div><div className="empty-sub">No data</div></div>;
+  let angle = -Math.PI / 2;
+  const slices = data.map(d => {
+    const pct = d.value / total;
+    const start = angle;
+    angle += pct * 2 * Math.PI;
+    return { ...d, pct, start, end: angle };
+  }).filter(d => d.value > 0);
+  const arc = (s) => {
+    const x1 = 60 + 55 * Math.cos(s.start), y1 = 60 + 55 * Math.sin(s.start);
+    const x2 = 60 + 55 * Math.cos(s.end), y2 = 60 + 55 * Math.sin(s.end);
+    const lg = s.pct > 0.5 ? 1 : 0;
+    return `M 60 60 L ${x1} ${y1} A 55 55 0 ${lg} 1 ${x2} ${y2} Z`;
+  };
+  return (
+    <div className="pie-chart">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        {slices.map((s, i) => <path key={i} d={arc(s)} fill={s.color} opacity="0.85" />)}
+        <circle cx="60" cy="60" r="30" fill="var(--bg2)" />
+        <text x="60" y="64" textAnchor="middle" fontSize="13" fontWeight="800" fill="var(--text)">{total}</text>
+      </svg>
+      <div className="pie-legend">
+        {data.map((d, i) => (
+          <div className="pie-legend-item" key={i}>
+            <div className="pie-dot" style={{ background: d.color }} />
+            <span className="pie-legend-label">{d.label}</span>
+            <span className="pie-legend-val">{d.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── BAR CHART ──────────────────────────────────────────────
+function BarChart({ data }) {
+  const max = Math.max(...data.map(d => d.value), 1);
+  const colors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8', '#38bdf8', '#0ea5e9'];
+  return (
+    <div className="bar-chart">
+      {data.map((d, i) => (
+        <div className="bar-group" key={i}>
+          <div className="bar"
+            data-val={`₹${d.value}`}
+            style={{ height: `${Math.max(4, (d.value / max) * 90)}px`, background: `linear-gradient(180deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}88)`, borderRadius: '4px 4px 0 0' }}
+          />
+          <div className="bar-label">{d.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── LOGIN PAGE ─────────────────────────────────────────────
+function LoginPage({ onLogin }) {
+  const [form, setForm] = useState({ email: 'admin@laundry.com', password: 'admin123' });
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const toast = useToast();
+  const DEMO = { email: 'admin@laundry.com', password: 'admin123', name: 'Admin', role: 'admin' };
+
+  const submit = (e) => {
+    e.preventDefault(); setErr('');
+    if (!form.email || !form.password) return setErr('Please fill all fields');
+    setLoading(true);
+    setTimeout(() => {
+      if (form.email === DEMO.email && form.password === DEMO.password) {
+        localStorage.setItem(USER_KEY, JSON.stringify({ name: DEMO.name, email: DEMO.email, role: DEMO.role }));
+        toast('Welcome back, Admin!', 'success');
+        onLogin({ name: DEMO.name, email: DEMO.email, role: DEMO.role });
+      } else setErr('Invalid credentials. Use admin@laundry.com / admin123');
+      setLoading(false);
+    }, 800);
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-header">
+          <div className="login-logo">🧺</div>
+          <div className="login-title">LaundryOS</div>
+          <div className="login-subtitle">Order Management System</div>
+        </div>
+        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:16}}>
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input className={`form-input ${err ? 'error' : ''}`} type="email" value={form.email}
+              onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="admin@laundry.com" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input className={`form-input ${err ? 'error' : ''}`} type="password" value={form.password}
+              onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" />
+          </div>
+          {err && <div className="form-error">⚠ {err}</div>}
+          <button className="btn btn-primary w-full" style={{justifyContent:'center',padding:'12px',fontSize:14,marginTop:4}} disabled={loading}>
+            {loading ? <><div className="spinner" />Signing in...</> : '🔑 Sign In'}
+          </button>
+          <div className="text-xs text-muted" style={{textAlign:'center'}}>Demo: admin@laundry.com / admin123</div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+function Dashboard({ orders }) {
+  const stats = useMemo(() => {
+    const total = orders.length;
+    const revenue = orders.reduce((s, o) => s + o.totalAmount, 0);
+    const byStatus = STATUSES.reduce((a, s) => { a[s] = orders.filter(o => o.status === s).length; return a; }, {});
+    const garmentTotals = {};
+    orders.forEach(o => o.garments.forEach(g => { garmentTotals[g.name] = (garmentTotals[g.name] || 0) + g.quantity; }));
+    const topGarments = Object.entries(garmentTotals).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    // Daily revenue (last 7 days)
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('en-IN', { weekday: 'short' });
+      const rev = orders.filter(o => {
+        const od = new Date(o.createdAt);
+        return od.toDateString() === d.toDateString();
+      }).reduce((s, o) => s + o.totalAmount, 0);
+      days.push({ label: key, value: rev });
+    }
+    return { total, revenue, byStatus, topGarments, days };
+  }, [orders]);
+
+  const pieData = [
+    { label: 'Received', value: stats.byStatus.RECEIVED, color: '#64748b' },
+    { label: 'Processing', value: stats.byStatus.PROCESSING, color: '#3b82f6' },
+    { label: 'Ready', value: stats.byStatus.READY, color: '#eab308' },
+    { label: 'Delivered', value: stats.byStatus.DELIVERED, color: '#22c55e' },
+  ];
+
+  return (
+    <div>
+      <div className="stats-grid">
+        {[
+          { label: 'Total Orders', value: stats.total, icon: '📦', cls: 'blue', trend: 'All time' },
+          { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: '💰', cls: 'green', trend: 'All time' },
+          { label: 'Active Orders', value: stats.byStatus.RECEIVED + stats.byStatus.PROCESSING, icon: '🔄', cls: 'yellow', trend: 'In progress' },
+          { label: 'Ready for Pickup', value: stats.byStatus.READY, icon: '✅', cls: 'red', trend: 'Awaiting pickup' },
+        ].map((s, i) => (
+          <div className={`stat-card ${s.cls}`} key={i}>
+            <div className="stat-icon">{s.icon}</div>
+            <div className="stat-label">{s.label}</div>
+            <div className="stat-value">{s.value}</div>
+            <div className="stat-trend">{s.trend}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="chart-wrap">
+        <div className="chart-card">
+          <div className="chart-title">📊 Revenue (Last 7 Days)</div>
+          <BarChart data={stats.days} />
+        </div>
+        <div className="chart-card">
+          <div className="chart-title">🍩 Orders by Status</div>
+          <PieChart data={pieData} />
+        </div>
+      </div>
+
+      <div className="chart-card">
+        <div className="chart-title">👕 Top Garments</div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:8}}>
+          {stats.topGarments.length === 0
+            ? <div className="text-muted text-sm">No data yet</div>
+            : stats.topGarments.map(([name, qty]) => {
+                const meta = GARMENTS.find(g => g.name === name);
+                return (
+                  <div key={name} style={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 16px',display:'flex',flexDirection:'column',alignItems:'center',gap:4,minWidth:90}}>
+                    <div style={{fontSize:24}}>{meta?.icon}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{name}</div>
+                    <div style={{fontSize:12,color:'var(--blue-light)',fontWeight:700}}>{qty} pcs</div>
+                  </div>
+                );
+              })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CREATE ORDER ───────────────────────────────────────────
+function CreateOrder({ onCreated }) {
+  const toast = useToast();
+  const emptyGarment = () => ({ name: GARMENTS[0].name, quantity: 1 });
+  const [form, setForm] = useState({ customerName: '', phone: '', notes: '' });
+  const [garments, setGarments] = useState([emptyGarment()]);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const total = useMemo(() =>
+    garments.reduce((s, g) => {
+      const meta = GARMENTS.find(x => x.name === g.name);
+      return s + (meta?.price || 0) * (g.quantity || 0);
+    }, 0), [garments]);
+
+  const validate = () => {
+    const e = {};
+    if (!form.customerName.trim()) e.customerName = 'Customer name is required';
+    if (!/^[0-9]{10}$/.test(form.phone)) e.phone = 'Enter a valid 10-digit phone number';
+    if (garments.some(g => !g.quantity || g.quantity < 1)) e.garments = 'All quantities must be ≥ 1';
+    setErrors(e); return Object.keys(e).length === 0;
+  };
+
+  const addGarment = () => setGarments(p => [...p, emptyGarment()]);
+  const removeGarment = (i) => setGarments(p => p.filter((_, j) => j !== i));
+  const updateGarment = (i, field, val) => setGarments(p => p.map((g, j) => j === i ? { ...g, [field]: val } : g));
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+    setTimeout(() => {
+      const gs = garments.map(g => {
+        const meta = GARMENTS.find(x => x.name === g.name);
+        return { name: g.name, quantity: Number(g.quantity), unitPrice: meta.price, subtotal: meta.price * Number(g.quantity) };
+      });
+      const order = {
+        orderId: genId(),
+        customerName: form.customerName.trim(),
+        phone: form.phone,
+        garments: gs,
+        totalAmount: total,
+        status: 'RECEIVED',
+        estimatedDelivery: addDays(new Date(), 2).toISOString(),
+        createdAt: new Date().toISOString(),
+        notes: form.notes,
+      };
+      const all = [order, ...loadOrders()];
+      saveOrders(all);
+      toast(`Order ${order.orderId} created for ${order.customerName}!`, 'success');
+      setForm({ customerName: '', phone: '', notes: '' });
+      setGarments([emptyGarment()]);
+      setErrors({});
+      setLoading(false);
+      onCreated(all);
+    }, 700);
+  };
+
+  return (
+    <div style={{maxWidth:640}}>
+      <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:20}}>
+        <div className="card">
+          <div style={{fontSize:14,fontWeight:700,color:'var(--text)',marginBottom:16,display:'flex',alignItems:'center',gap:8}}>
+            👤 Customer Details
+          </div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Customer Name *</label>
+              <input className={`form-input ${errors.customerName ? 'error' : ''}`}
+                value={form.customerName} onChange={e => setForm(p => ({...p, customerName: e.target.value}))}
+                placeholder="Full name" />
+              {errors.customerName && <div className="form-error">{errors.customerName}</div>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone Number *</label>
+              <input className={`form-input ${errors.phone ? 'error' : ''}`} type="tel" maxLength={10}
+                value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value.replace(/\D/,'')}))}
+                placeholder="10-digit number" />
+              {errors.phone && <div className="form-error">{errors.phone}</div>}
+            </div>
+          </div>
+          <div className="form-group mt-4">
+            <label className="form-label">Notes (optional)</label>
+            <input className="form-input" value={form.notes}
+              onChange={e => setForm(p => ({...p, notes: e.target.value}))} placeholder="Special instructions..." />
+          </div>
+        </div>
+
+        <div className="card">
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:'var(--text)',display:'flex',alignItems:'center',gap:8}}>
+              👕 Garments
+            </div>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={addGarment}>+ Add Item</button>
+          </div>
+          {errors.garments && <div className="form-error mb-4">{errors.garments}</div>}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {garments.map((g, i) => {
+              const meta = GARMENTS.find(x => x.name === g.name);
+              return (
+                <div className="garment-row" key={i}>
+                  <select className="garment-select" value={g.name}
+                    onChange={e => updateGarment(i, 'name', e.target.value)}>
+                    {GARMENTS.map(gm => <option key={gm.name} value={gm.name}>{gm.icon} {gm.name} — ₹{gm.price}</option>)}
+                  </select>
+                  <input className="qty-input" type="number" min={1} max={99}
+                    value={g.quantity} onChange={e => updateGarment(i, 'quantity', e.target.value)} />
+                  <div className="garment-price">₹{(meta?.price || 0) * (Number(g.quantity) || 0)}</div>
+                  {garments.length > 1 && (
+                    <button type="button" className="btn btn-icon btn-danger" style={{flexShrink:0}} onClick={() => removeGarment(i)}>✕</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="divider" />
+          <div className="total-bar">
+            <div>
+              <div className="total-label">Estimated Delivery</div>
+              <div style={{fontSize:13,color:'var(--text)',fontWeight:600,marginTop:2}}>📅 {fmtDate(addDays(new Date(), 2))}</div>
+            </div>
+            <div style={{textAlign:'right'}}>
+              <div className="total-label">Total Amount</div>
+              <div className="total-value">₹{total.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" className="btn btn-primary" style={{alignSelf:'flex-start',padding:'12px 28px',fontSize:14}} disabled={loading}>
+          {loading ? <><div className="spinner" /> Creating...</> : '🚀 Create Order'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ── ORDERS PAGE ────────────────────────────────────────────
+function Orders({ orders, onUpdate }) {
+  const toast = useToast();
+  const [search, setSearch] = useState('');
+  const [phoneSearch, setPhoneSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [garmentFilter, setGarmentFilter] = useState('');
+  const [confirm, setConfirm] = useState(null); // {orderId, status}
+  const [editOrder, setEditOrder] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const filtered = useMemo(() => {
+    return orders.filter(o => {
+      if (search && !o.customerName.toLowerCase().includes(search.toLowerCase())) return false;
+      if (phoneSearch && !o.phone.includes(phoneSearch)) return false;
+      if (statusFilter && o.status !== statusFilter) return false;
+      if (garmentFilter && !o.garments.some(g => g.name === garmentFilter)) return false;
+      return true;
+    });
+  }, [orders, search, phoneSearch, statusFilter, garmentFilter]);
+
+  const isRecent = (o) => (Date.now() - new Date(o.createdAt)) < 3600000;
+
+  const handleStatusChange = (orderId, newStatus) => {
+    if (newStatus === 'DELIVERED') {
+      setConfirm({ orderId, status: newStatus }); return;
+    }
+    applyStatus(orderId, newStatus);
+  };
+
+  const applyStatus = (orderId, status) => {
+    const updated = loadOrders().map(o => o.orderId === orderId ? { ...o, status } : o);
+    saveOrders(updated); onUpdate(updated);
+    toast(`Status updated to ${status}`, 'success');
+    setConfirm(null);
+  };
+
+  const handleDelete = (orderId) => {
+    const updated = loadOrders().filter(o => o.orderId !== orderId);
+    saveOrders(updated); onUpdate(updated);
+    toast('Order deleted', 'info');
+    setDeleteConfirm(null);
+  };
+
+  return (
+    <div>
+      {confirm && (
+        <ConfirmModal
+          title="Mark as Delivered?"
+          body={`Are you sure you want to mark order ${confirm.orderId} as DELIVERED? This action indicates the customer has collected their items.`}
+          onConfirm={() => applyStatus(confirm.orderId, confirm.status)}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Delete Order?"
+          body={`Delete order ${deleteConfirm}? This cannot be undone.`}
+          onConfirm={() => handleDelete(deleteConfirm)}
+          onCancel={() => setDeleteConfirm(null)}
+          danger
+        />
+      )}
+      {editOrder && <EditModal order={editOrder} onSave={(updated) => { onUpdate(updated); setEditOrder(null); toast('Order updated!', 'success'); }} onClose={() => setEditOrder(null)} />}
+
+      <div className="filters-bar">
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input className="search-input" placeholder="Search by name..." value={search}
+            onChange={e => setSearch(e.target.value)} />
+        </div>
+        <div className="search-wrap" style={{maxWidth:180}}>
+          <span className="search-icon">📞</span>
+          <input className="search-input" placeholder="Search phone..." value={phoneSearch}
+            onChange={e => setPhoneSearch(e.target.value)} />
+        </div>
+        <select className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="">All Statuses</option>
+          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className="filter-select" value={garmentFilter} onChange={e => setGarmentFilter(e.target.value)}>
+          <option value="">All Garments</option>
+          {GARMENTS.map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+        </select>
+        <div className="text-sm text-muted" style={{marginLeft:'auto',flexShrink:0}}>
+          {filtered.length} order{filtered.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📭</div>
+          <div className="empty-title">No orders found</div>
+          <div className="empty-sub">Try adjusting your filters</div>
+        </div>
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Delivery</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(o => (
+                <tr key={o.orderId} className={isRecent(o) ? 'recent' : ''}>
+                  <td>
+                    <span className="order-id">{o.orderId}</span>
+                    {isRecent(o) && <span className="recent-badge">NEW</span>}
+                  </td>
+                  <td>
+                    <div className="customer-name">{o.customerName}</div>
+                    <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>{fmtDate(o.createdAt)} {fmtTime(o.createdAt)}</div>
+                  </td>
+                  <td><span className="phone">{o.phone}</span></td>
+                  <td>
+                    <div className="garments-summary">
+                      {o.garments.map((g, i) => (
+                        <span className="garment-tag" key={i}>{g.name} ×{g.quantity}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td><span className="amount">₹{o.totalAmount.toLocaleString()}</span></td>
+                  <td><span style={{fontSize:12,color:'var(--text-dim)'}}>{fmtDate(o.estimatedDelivery)}</span></td>
+                  <td>
+                    <select className="status-select" value={o.status}
+                      onChange={e => handleStatusChange(o.orderId, e.target.value)}>
+                      {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <div style={{display:'flex',gap:6}}>
+                      <button className="btn btn-icon btn-ghost btn-sm" title="Edit" onClick={() => setEditOrder(o)}>✏️</button>
+                      <button className="btn btn-icon btn-danger btn-sm" title="Delete" onClick={() => setDeleteConfirm(o.orderId)}>🗑</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── EDIT MODAL ─────────────────────────────────────────────
+function EditModal({ order, onSave, onClose }) {
+  const [form, setForm] = useState({ customerName: order.customerName, phone: order.phone, notes: order.notes || '' });
+  const [garments, setGarments] = useState(order.garments.map(g => ({ name: g.name, quantity: g.quantity })));
+  const [errors, setErrors] = useState({});
+  const emptyGarment = () => ({ name: GARMENTS[0].name, quantity: 1 });
+
+  const total = garments.reduce((s, g) => {
+    const meta = GARMENTS.find(x => x.name === g.name);
+    return s + (meta?.price || 0) * (Number(g.quantity) || 0);
+  }, 0);
+
+  const submit = () => {
+    const e = {};
+    if (!form.customerName.trim()) e.customerName = 'Required';
+    if (!/^[0-9]{10}$/.test(form.phone)) e.phone = 'Invalid phone';
+    if (Object.keys(e).length) { setErrors(e); return; }
+    const gs = garments.map(g => {
+      const meta = GARMENTS.find(x => x.name === g.name);
+      return { name: g.name, quantity: Number(g.quantity), unitPrice: meta.price, subtotal: meta.price * Number(g.quantity) };
+    });
+    const all = loadOrders().map(o => o.orderId === order.orderId
+      ? { ...o, customerName: form.customerName.trim(), phone: form.phone, notes: form.notes, garments: gs, totalAmount: total }
+      : o);
+    saveOrders(all); onSave(all);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{maxWidth:560,maxHeight:'90vh',overflow:'auto'}} onClick={e => e.stopPropagation()}>
+        <div className="modal-title">✏️ Edit Order — {order.orderId}</div>
+        <div style={{display:'flex',flexDirection:'column',gap:14,marginBottom:20}}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Customer Name</label>
+              <input className={`form-input ${errors.customerName ? 'error' : ''}`} value={form.customerName}
+                onChange={e => setForm(p => ({...p, customerName: e.target.value}))} />
+              {errors.customerName && <div className="form-error">{errors.customerName}</div>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone</label>
+              <input className={`form-input ${errors.phone ? 'error' : ''}`} value={form.phone} maxLength={10}
+                onChange={e => setForm(p => ({...p, phone: e.target.value.replace(/\D/,'')}))} />
+              {errors.phone && <div className="form-error">{errors.phone}</div>}
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {garments.map((g, i) => {
+              const meta = GARMENTS.find(x => x.name === g.name);
+              return (
+                <div className="garment-row" key={i}>
+                  <select className="garment-select" value={g.name}
+                    onChange={e => setGarments(p => p.map((x,j) => j===i?{...x,name:e.target.value}:x))}>
+                    {GARMENTS.map(gm => <option key={gm.name} value={gm.name}>{gm.icon} {gm.name}</option>)}
+                  </select>
+                  <input className="qty-input" type="number" min={1} value={g.quantity}
+                    onChange={e => setGarments(p => p.map((x,j) => j===i?{...x,quantity:e.target.value}:x))} />
+                  <div className="garment-price">₹{(meta?.price||0)*Number(g.quantity||0)}</div>
+                  {garments.length > 1 && <button type="button" className="btn btn-icon btn-danger" onClick={() => setGarments(p => p.filter((_,j)=>j!==i))}>✕</button>}
+                </div>
+              );
+            })}
+            <button type="button" className="btn btn-ghost btn-sm" style={{alignSelf:'flex-start'}} onClick={() => setGarments(p => [...p, emptyGarment()])}>+ Add Item</button>
+          </div>
+          <div className="total-bar" style={{padding:'12px 16px'}}>
+            <span className="total-label">Total</span>
+            <span className="total-value" style={{fontSize:18}}>₹{total.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── APP SHELL ──────────────────────────────────────────────
+const PAGES = [
+  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'orders', label: 'All Orders', icon: '📦' },
+  { id: 'create', label: 'Create Order', icon: '➕' },
+];
+
+function App() {
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; }
+  });
+  const [page, setPage] = useState('dashboard');
+  const [orders, setOrders] = useState(loadOrders);
+
+  const refreshOrders = useCallback((updated) => {
+    setOrders(updated || loadOrders());
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+  };
+
+  if (!user) return <LoginPage onLogin={setUser} />;
+
+  const pageTitles = {
+    dashboard: { title: 'Dashboard', sub: `Welcome back, ${user.name}` },
+    orders: { title: 'All Orders', sub: `${orders.length} total orders in system` },
+    create: { title: 'Create Order', sub: 'Add a new laundry order' },
+  };
+
+  return (
+    <div className="app">
+      <div className="sidebar">
+        <div className="sidebar-logo">
+          <div className="logo-icon">🧺</div>
+          <div className="logo-text">Laundry<span>OS</span></div>
+        </div>
+        <div className="sidebar-nav">
+          <div className="nav-section-label">Menu</div>
+          {PAGES.map(p => (
+            <button key={p.id} className={`nav-item ${page === p.id ? 'active' : ''}`}
+              onClick={() => setPage(p.id)}>
+              <span className="nav-icon">{p.icon}</span>
+              {p.label}
+              {p.id === 'orders' && (
+                <span style={{marginLeft:'auto',background:'rgba(59,130,246,0.2)',color:'var(--blue-light)',fontSize:11,fontWeight:700,padding:'1px 7px',borderRadius:20}}>{orders.filter(o=>o.status!=='DELIVERED').length}</span>
+              )}
+            </button>
+          ))}
+          <div className="nav-section-label" style={{marginTop:12}}>Status</div>
+          {STATUSES.map(s => (
+            <div key={s} className="nav-item" style={{padding:'7px 12px',cursor:'default'}}>
+              <StatusBadge status={s} />
+              <span style={{marginLeft:'auto',fontSize:13,fontWeight:700,color:'var(--text)'}}>{orders.filter(o=>o.status===s).length}</span>
+            </div>
+          ))}
+        </div>
+        <div className="sidebar-bottom">
+          <div className="user-card">
+            <div className="user-avatar">{user.name[0].toUpperCase()}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="user-name">{user.name}</div>
+              <div className="user-role">{user.role}</div>
+            </div>
+            <button className="btn btn-icon btn-ghost" title="Logout" onClick={logout} style={{flexShrink:0}}>🚪</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="main">
+        <div className="header">
+          <div>
+            <div className="header-title">{pageTitles[page].title}</div>
+            <div className="header-subtitle">{pageTitles[page].sub}</div>
+          </div>
+          <div style={{marginLeft:'auto',display:'flex',gap:10,alignItems:'center'}}>
+            {page !== 'create' && (
+              <button className="btn btn-primary" onClick={() => setPage('create')}>+ New Order</button>
+            )}
+            <div style={{fontSize:12,color:'var(--text-muted)',background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 12px'}}>
+              🕒 {new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}
+            </div>
+          </div>
+        </div>
+        <div className="content">
+          {page === 'dashboard' && <Dashboard orders={orders} />}
+          {page === 'orders' && <Orders orders={orders} onUpdate={refreshOrders} />}
+          {page === 'create' && <CreateOrder onCreated={(updated) => { refreshOrders(updated); setPage('orders'); }} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <ToastProvider><App /></ToastProvider>
+);
+</script>
+</body>
+</html>
